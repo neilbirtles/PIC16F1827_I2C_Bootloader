@@ -24,7 +24,7 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 
 
 # Project Name
-PROJECTNAME=Fresh_bootloader.X
+PROJECTNAME=PIC16F1827_I2C_bootloader.X
 
 # Active Configuration
 DEFAULTCONF=default

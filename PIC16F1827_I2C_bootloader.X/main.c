@@ -1,48 +1,21 @@
-/**
-  Generated Main Source File
-
-  Company:
-    Microchip Technology Inc.
-
-  File Name:
-    main.c
-
-  Summary:
-    This is the main file generated using PIC10 / PIC12 / PIC16 / PIC18 MCUs
-
-  Description:
-    This header file provides implementations for driver APIs for all modules selected in the GUI.
-    Generation Information :
-        Product Revision  :  PIC10 / PIC12 / PIC16 / PIC18 MCUs - 1.81.4
-        Device            :  PIC16F1827
-        Driver Version    :  2.00
-*/
-
-/*
-    (c) 2018 Microchip Technology Inc. and its subsidiaries. 
-    
-    Subject to your compliance with these terms, you may use Microchip software and any 
-    derivatives exclusively with Microchip products. It is your responsibility to comply with third party 
-    license terms applicable to your use of third party software (including open source software) that 
-    may accompany Microchip software.
-    
-    THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES, WHETHER 
-    EXPRESS, IMPLIED OR STATUTORY, APPLY TO THIS SOFTWARE, INCLUDING ANY 
-    IMPLIED WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY, AND FITNESS 
-    FOR A PARTICULAR PURPOSE.
-    
-    IN NO EVENT WILL MICROCHIP BE LIABLE FOR ANY INDIRECT, SPECIAL, PUNITIVE, 
-    INCIDENTAL OR CONSEQUENTIAL LOSS, DAMAGE, COST OR EXPENSE OF ANY KIND 
-    WHATSOEVER RELATED TO THE SOFTWARE, HOWEVER CAUSED, EVEN IF MICROCHIP 
-    HAS BEEN ADVISED OF THE POSSIBILITY OR THE DAMAGES ARE FORESEEABLE. TO 
-    THE FULLEST EXTENT ALLOWED BY LAW, MICROCHIP'S TOTAL LIABILITY ON ALL 
-    CLAIMS IN ANY WAY RELATED TO THIS SOFTWARE WILL NOT EXCEED THE AMOUNT 
-    OF FEES, IF ANY, THAT YOU HAVE PAID DIRECTLY TO MICROCHIP FOR THIS 
-    SOFTWARE.
-*/
+/*********************************************************************
+* FileName:        main.c
+* Processor:       PIC16F1827
+* Compiler:        XC8
+*
+* Software License Agreement: See Github License file
+*
+*********************************************************************
+* File Description:
+*
+* Change History:
+* 
+* Author               Neil Birtles
+********************************************************************/
 
 #include "main.h"
-#include "pksa.h"
+#include "i2c_slave.h"
+#include "flash_routines.h"
 #include <pic.h>
 
 // CONFIG1
@@ -64,6 +37,10 @@
 #pragma config BORV = LO    // Brown-out Reset Voltage Selection->Brown-out Reset Voltage (Vbor), low trip point selected.
 #pragma config LVP = ON    // Low-Voltage Programming Enable->Low-voltage programming enabled
 
+//the following line needs to be added to a target program to allow the bootloader
+//to detect that 
+//const unsigned char app_loaded __at(0xFFF) = 0x55;
+
 void SYSTEM_Initialize(void)
 {
 
@@ -77,28 +54,27 @@ void PIN_MANAGER_Initialize(void)
     /**
     LATx registers
     */
-    LATA = 0x00;
+    LATA = 0x02;
     LATB = 0x00;
 
     /**
     TRISx registers
     */
-    TRISA = 0xFF;
+    TRISA = 0xFD;
     TRISB = 0xFF;
 
     /**
     ANSELx registers
     */
-    ANSELB = 0xFE;
-    ANSELA = 0x1F;
+    ANSELB = 0x08;
+    ANSELA = 0x19;
 
     /**
     WPUx registers
     */
-    WPUB = 0x00;
+    WPUB = 0xC0;
     WPUA = 0x00;
-    OPTION_REGbits.nWPUEN = 1;
-
+    OPTION_REGbits.nWPUEN = 0;
 
     /**
     APFCONx registers
@@ -113,8 +89,8 @@ void PIN_MANAGER_Initialize(void)
 
 void OSCILLATOR_Initialize(void)
 {
-    // SCS FOSC; SPLLEN disabled; IRCF 4MHz_HF; 
-    OSCCON = 0x68;
+    // SCS FOSC; SPLLEN disabled; IRCF 8MHz_HF; 
+    OSCCON = 0x70;
     // TUN 0; 
     OSCTUNE = 0x00;
     // SBOREN disabled; 
@@ -130,14 +106,17 @@ void WDT_Initialize(void)
 
 void __interrupt() INTERRUPT_InterruptManager (void)
 {
-    asm("GOTO 0x204");
+    //main program reset vector is now 0x290, so interrupt vector is +4 from there
+    asm("GOTO 0x294");
 }
 
-unsigned char flash_buffer[16];
-unsigned char pksa_wd_address;
-unsigned char pksa_index;
-unsigned char pksa_status;
+unsigned char flash_buffer[Device_Prog_Mem_Write_Latches*2];
+unsigned char i2c_wd_address;
+unsigned char i2c_index;
+unsigned char i2c_status;
 unsigned int counter = 0;
+unsigned int program_loaded_indicator = 0x3455;
+unsigned int program_loaded_location = 0xFFFF;
 
 ADDRESS	flash_addr_pointer;
 
@@ -148,6 +127,8 @@ void main(void)
 {
     // initialize the device
     SYSTEM_Initialize();
+    
+    I2C_Slave_Init();
 
     // When using interrupts, you need to set the Global and Peripheral Interrupt Enable bits
     // Use the following macros to:
@@ -164,9 +145,30 @@ void main(void)
     // Disable the Peripheral Interrupts
     //INTERRUPT_PeripheralInterruptDisable();
 
+    // If start voltage cal is held low at reset, then force bootloader mode
+	if (!Start_Voltage_Cal_GetValue())
+	{
+		//show bootloader mode by turning on LED until voltage cal is released 
+        LED_SetLow();
+		while(!Start_Voltage_Cal_GetValue());
+		LED_SetHigh();
+		goto App;
+	}	
+
+	// if we have any application loaded, jump to it
+	if (flash_memory_read(program_loaded_location) == program_loaded_indicator)
+	{
+        //main program reset vector is now 0x290
+        asm("goto 0x290");
+	}
+
+App:
+	
+    // main program loop
     while (1)
     {
-        // Add your application code
+        do_i2c_tasks();
+        LED_Toggle();			
     }
 }
 /**

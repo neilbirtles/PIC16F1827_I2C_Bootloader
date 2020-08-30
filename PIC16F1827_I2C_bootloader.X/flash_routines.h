@@ -28,9 +28,10 @@
 * File Description:
 *
 * Change History:
-* Author               Cristian Toma
+*   Allowed flash_memory_write to take advantage of more than 8 write latches
+* Author               Cristian Toma, Neil Birtles
 ********************************************************************/
 unsigned int flash_memory_read (unsigned int address);
-void flash_memory_write (unsigned int address, unsigned char *data);
+void flash_memory_write (unsigned int address, unsigned char *data, unsigned char write_latches_qty);
 void flash_memory_erase (unsigned int address);
 	

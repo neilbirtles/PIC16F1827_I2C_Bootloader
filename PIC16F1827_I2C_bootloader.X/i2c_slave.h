@@ -1,5 +1,5 @@
 /*********************************************************************
-* FileName:        pksa.h
+* FileName:        i2c_slave.h
 * Dependencies:    See INCLUDES section below
 * Processor:       
 * Compiler:        
@@ -28,12 +28,14 @@
 * File Description:
 *
 * Change History:
-* Author               Cristian Toma
+*   Changed files to remove refs to PKSA 
+*   Updated for XC8 compiler / PIC16F1827
+* Author               Cristian Toma, Neil Birtles
 ********************************************************************/
 
 #include "typedef.h"
 
-// pickit serial communication states
+// I2C serial communication states
 #define I2C_NO_TRANSACTION					0
 #define I2C_SLAVE_ADDRESS_RECEIVED			1
 #define I2C_WORD_ADDRESS_RECEIVED			2
@@ -53,18 +55,15 @@
 // address typdef
 extern ADDRESS	flash_addr_pointer;
 
-
 // function prototypes
 void I2C_Slave_Init(void);
-int  do_i2c_tasks(void);
+void do_i2c_tasks(void);
 
 // externs
-extern unsigned char nrbytes; 
 extern unsigned char flash_buffer[];
-extern unsigned char pksa_index;
-extern unsigned char pksa_wd_address;
-extern unsigned char pksa_status;
-extern unsigned char pksa_cmd;
+extern unsigned char i2c_index;
+extern unsigned char i2c_wd_address;
+extern unsigned char i2c_status;
 
 
 
