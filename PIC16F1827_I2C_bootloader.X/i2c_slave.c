@@ -39,7 +39,6 @@
 #include "main.h"
 #include "flash_routines.h"
 
-const	unsigned char mask = 0x25;		//I2C states mask
 void I2C_Slave_Init()
 {
 	//these need to be configured according to the chip being used
@@ -97,7 +96,7 @@ void do_i2c_tasks()
 							}
 							else if ( i2c_status == I2C_WORD_ADDRESS_RECEIVED )
 							{	// second time we get the word address, so look into word address 
-								if ( i2c_wd_address == 0x01)	// 0x01 is buffer word address
+								if ( i2c_wd_address == SET_FLASH_POINTER_COMMAND)	// 0x01 is buffer word address
 								{
 									if (i2c_index == 0)
 									{
@@ -110,7 +109,7 @@ void do_i2c_tasks()
 										
 									}
 								}
-								if ( i2c_wd_address == 0x02 )	// 0x02 write data word address
+								if ( i2c_wd_address == RECEIVE_FLASH_DATA_COMMAND )	// 0x02 write data word address
 								{
 									flash_buffer[i2c_index]=temp;
 									i2c_index++;
@@ -122,12 +121,12 @@ void do_i2c_tasks()
 						break;
 						
 						case MRA :								//MASTER READS ADDRESS STATE
-								if (i2c_wd_address == 0x01)			// buffer word address
+								if (i2c_wd_address == GET_FLASH_POINTER_COMMAND)			// buffer word address
 								{	
 									// Send first byte here, next byte will be send at MRD case, see below		
 									_WriteData (flash_addr_pointer.bytes.byte_H);
 								}
-								if (i2c_wd_address == 0x03)	// read data from flash memory
+								if (i2c_wd_address == READ_FLASH_COMMAND)	// read data from flash memory
 								{
 									if (i2c_index == 0)
 									{
@@ -148,7 +147,7 @@ void do_i2c_tasks()
 											i2c_index--;	// should never get here....
 									}		
 								}
-								if (i2c_wd_address == 0x04)
+								if (i2c_wd_address == ERASE_FLASH_ROW_COMMAND)
 								{
 									// erase command, erases a row of Device_Prog_Mem_Erase_Block_Size words
 									//LED_2 = 1;
@@ -157,7 +156,7 @@ void do_i2c_tasks()
 									_WriteData(0x00);
 									//LED_2 = 0;
 								}
-								if (i2c_wd_address == 0x05)
+								if (i2c_wd_address == WRITE_BUFFER_TO_FLASH_COMMAND)
 								{
 									// write command. What's stored into flash_buffer is written 
 									// to FLASH memory at the address pointed to by the address pointer.
@@ -169,7 +168,7 @@ void do_i2c_tasks()
 									//LED_3 = 0;	
 									
 								}	
-								if (i2c_wd_address == 0x06)
+								if (i2c_wd_address == JUMP_TO_APPLICATION_COMMAND)
 								{
 									// jump to appplication code
 									_WriteData(0x00);
@@ -178,16 +177,21 @@ void do_i2c_tasks()
 									
                                     asm("RESET");
 									
-								}		
+								}
+                                if (i2c_wd_address == PING_COMMAND) //ping check command for bootloader
+                                {
+                                    //acknowledge with 0xAA
+                                    _WriteData(0xAA);
+                                }
 						break;
 						
 						
 						case MRD :								//MASTER READS DATA STATE
-								if (i2c_wd_address == 0x01)	// buffer word address
+								if (i2c_wd_address == GET_FLASH_POINTER_COMMAND)	// buffer word address
 								{		
 									_WriteData (flash_addr_pointer.bytes.byte_L);
 								}
-								if (i2c_wd_address == 0x03)
+								if (i2c_wd_address == READ_FLASH_COMMAND)
 								{
 									_WriteData(flash_buffer[i2c_index]);
 									i2c_index++;

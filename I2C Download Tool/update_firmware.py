@@ -1,24 +1,23 @@
 #python port / update PC host code from https://www.microchip.com/wwwAppNotes/AppNotes.aspx?appnote=en546181
 
 import argparse
-
 import device
 
 import_file_path = ""
 verbose_output = False
 debug_output = False
 
+devices_to_prog_addresses = {0xA0, 0xB0}
+
 #the offset address where the actual program starts. This is after the bootloader code 
 #bootloader_prog_mem_offset = 0x0290
 bootloader_prog_mem_offset = 0x0000
 prog_mem_start_address = 0x0000
 prog_mem_end_address = 0x0FFF
-#PIC16F1827 has 4096 words progam memory 
 prog_mem_size = 4096 
 #2 bytes per word in program memory (14bits) - all addresses in hex file are on bytes so need to divide by
 # this to get the prog mem address
 bytes_per_word = 2 
-#PIC16F1827 has 256 bytes EEPROM
 eeprom_size = 256
 eeprom_start_address = 0xF000
 eeprom_end_address = 0xF0FF
@@ -28,7 +27,6 @@ device_ids_start_address = 0x8006
 device_ids_end_address = 0x8006
 config_words_start_address = 0x8007
 config_words_end_address = 0x8008
-
 
 #create a device to store the info read from the hexfile
 pic16f1827 = device.Device(prog_mem_size, eeprom_size)
@@ -166,3 +164,6 @@ except FileNotFoundError as fnf_error:
     print ("Requested hexfile \"" + import_file_path + "\" not found, please specify a valid file")
 
 print("Hex file successfully loaded")
+
+for device in devices_to_prog_addresses:
+    pass

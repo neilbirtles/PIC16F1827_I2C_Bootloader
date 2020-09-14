@@ -46,11 +46,27 @@
 // slave address definition
 #define SLAVE_ADDR 0xa0 			
 
-// define states
-#define MWA 0x1			//Master Writes Address
-#define MWD 0x21		//Master Writes Data
-#define MRA 0x5			//Master Reads Address
-#define MRD 0x24		//Master Reads Data
+//I2C states mask - masks all bits in SSPxSTAT apart from:
+//bit 5 - D/A: Data (1) / Address (0) bit
+//bit 2 - R/W: Read (1) /Write (0) bit
+//bit 0 - BF: Buffer Full Status bit - 1 if rx complete or tx in progress
+const unsigned char mask = 0x25;
+
+//Above mask is ANDed with SSPxSTAT to get the below states
+#define MWA 0x1			//Master Writes Address SSPxSTAT[xx0xx0x1]
+#define MWD 0x21		//Master Writes Data    SSPxSTAT[xx1xx0x1]
+#define MRA 0x5			//Master Reads Address  SSPxSTAT[xx0xx1x1]
+#define MRD 0x24		//Master Reads Data     SSPxSTAT[xx1xx1x0]
+
+//define commands
+#define GET_FLASH_POINTER_COMMAND       0x01
+#define SET_FLASH_POINTER_COMMAND       0x01
+#define RECEIVE_FLASH_DATA_COMMAND      0x02
+#define READ_FLASH_COMMAND              0x03
+#define ERASE_FLASH_ROW_COMMAND         0x04
+#define WRITE_BUFFER_TO_FLASH_COMMAND   0x05
+#define JUMP_TO_APPLICATION_COMMAND     0x06
+#define PING_COMMAND                    0xAA
 
 // address typdef
 extern ADDRESS	flash_addr_pointer;
