@@ -150,7 +150,10 @@ void main(void)
 	{
 		//show bootloader mode by turning on LED until voltage cal is released 
         LED_SetLow();
-		while(!Start_Voltage_Cal_GetValue());
+        while(!Start_Voltage_Cal_GetValue()){
+            LED_Toggle();
+            __delay_ms(200);
+        }
 		LED_SetHigh();
 		goto App;
 	}	
