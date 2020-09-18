@@ -30,6 +30,7 @@
 * Change History:
 *   Changed files to remove refs to PKSA 
 *   Updated for XC8 compiler / PIC16F1827
+*   Fixed slave address setting 
 *   Allowed flash_memory_write to take advantage of more than 8 write latches
 * Author               Cristian Toma, Neil Birtles
 ********************************************************************/
@@ -47,7 +48,16 @@ void I2C_Slave_Init()
 
 	SSP2BUF = 0x0;          // clear the buffer
 	SSP2STAT = 0x80;		// 100Khz
-	SSP2ADD = SLAVE_ADDR;	
+    //work out the address for this slave based on the state of address pin
+    //left shift as only 7 MSB used in SSP2ADD
+    if(I2C_Addr_Bit_GetValue())
+    {
+        SSP2ADD = 0x11 << 1;
+    }else
+    {
+        SSP2ADD = 0x10 << 1;
+    }
+	//SSP2ADD = SLAVE_ADDR << 1;	//only upper 7 bits are used for the address so shift up one place
 	SSP2CON1 = 0x36;		// clear WCOL & SSPOV, enable serial port, enable clock, set Slave mode & 7bit addr	
 	SSP2CON3 |= 0b01100000;	// Enable interrupt on detection of Start or Restart conditions, SSPBUF is updated 
                             //and ACK is generated for a received address/data byte, ignoring the state of the SSPOV bit only if the BF bit = 0.
@@ -65,7 +75,7 @@ void _WriteData(unsigned char data)
 void do_i2c_tasks()
 {
 		unsigned int dat =0 ;
-		unsigned char stat,temp,idx;
+		unsigned char temp,idx;
 
 		unsigned char token = 0;		
 		
@@ -207,7 +217,7 @@ void do_i2c_tasks()
 				i2c_status = I2C_NO_TRANSACTION; 
 			}	
 
-	
+            
 			PIR4bits.SSP2IF = 0;
 			SSP2CON1bits.SSPEN = 1;														
 			SSP2CON1bits.CKP = 1;	//release clock

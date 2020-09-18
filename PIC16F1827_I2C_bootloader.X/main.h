@@ -33,6 +33,8 @@
 // get/set Start_Voltage_Cal aliases
 #define Start_Voltage_Cal_GetValue()           PORTBbits.RB6
 
+#define I2C_Addr_Bit_GetValue()           PORTBbits.RB0
+
 #define INTERRUPT_GlobalInterruptEnable() (INTCONbits.GIE = 1)
 #define INTERRUPT_GlobalInterruptDisable() (INTCONbits.GIE = 0)
 

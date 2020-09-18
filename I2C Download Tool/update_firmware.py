@@ -7,7 +7,7 @@ import_file_path = ""
 verbose_output = False
 debug_output = False
 
-devices_to_prog_addresses = {0xA0, 0xB0}
+devices_to_prog_addresses = {0x10, 0x11}
 
 #the offset address where the actual program starts. This is after the bootloader code 
 #bootloader_prog_mem_offset = 0x0290

@@ -106,8 +106,8 @@ void WDT_Initialize(void)
 
 void __interrupt() INTERRUPT_InterruptManager (void)
 {
-    //main program reset vector is now 0x290, so interrupt vector is +4 from there
-    asm("GOTO 0x294");
+    //main program reset vector is now 0x300, so interrupt vector is +4 from there
+    asm("GOTO 0x304");
 }
 
 unsigned char flash_buffer[Device_Prog_Mem_Write_Latches*2];
@@ -162,7 +162,7 @@ void main(void)
 	if (flash_memory_read(program_loaded_location) == program_loaded_indicator)
 	{
         //main program reset vector is now 0x290
-        asm("goto 0x290");
+        asm("goto 0x300");
 	}
 
 App:

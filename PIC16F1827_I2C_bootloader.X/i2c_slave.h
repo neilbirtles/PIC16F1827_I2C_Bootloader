@@ -41,10 +41,7 @@
 #define I2C_WORD_ADDRESS_RECEIVED			2
 #define I2C_READ_ADDRESS					3
 #define I2C_READ_DATA						4
-#define I2C_MASTER_NACK						5
-
-// slave address definition
-#define SLAVE_ADDR 0xa0 			
+#define I2C_MASTER_NACK						5		
 
 //I2C states mask - masks all bits in SSPxSTAT apart from:
 //bit 5 - D/A: Data (1) / Address (0) bit
