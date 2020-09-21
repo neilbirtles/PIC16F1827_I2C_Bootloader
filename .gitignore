@@ -1,3 +1,4 @@
 
 PIC16F1827_I2C_bootloader.X/disassembly/listing.disasm
 I2C Download Tool/__pycache__/device.cpython-36.pyc
+*.pyc

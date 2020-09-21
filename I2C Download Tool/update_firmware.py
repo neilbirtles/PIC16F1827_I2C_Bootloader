@@ -2,16 +2,17 @@
 
 import argparse
 import device
+from i2c_master import I2C_Bootloader_Interface
 
 import_file_path = ""
 verbose_output = False
-debug_output = False
+debug_output = True
 
 devices_to_prog_addresses = {0x10, 0x11}
 
 #the offset address where the actual program starts. This is after the bootloader code 
-#bootloader_prog_mem_offset = 0x0290
-bootloader_prog_mem_offset = 0x0000
+bootloader_prog_mem_offset = 0x0300
+#bootloader_prog_mem_offset = 0x0000
 prog_mem_start_address = 0x0000
 prog_mem_end_address = 0x0FFF
 prog_mem_size = 4096 
@@ -108,8 +109,8 @@ try:
                             # match the word address so only get the even one
                             if (byte_address//bytes_per_word == bootloader_prog_mem_offset) &\
                                 (byte_address % bytes_per_word == 0): 
-                                print("Reading program memory...")
-                            if debug_output:
+                                print("Reading program memory contents from hex file...")
+                            if (byte_address % bytes_per_word == 0) & debug_output:
                                 print("reading program memory: " + hex(byte_address//bytes_per_word))
                             #AND the current memory word we have got with the existing word - blank is 0x3FFF
                             #if this is a least significant byte then upper byte is 0xFF and if its most significant byte
@@ -123,25 +124,25 @@ try:
                         elif (byte_address//bytes_per_word >= user_ids_start_address) &\
                          (byte_address//bytes_per_word <= user_ids_end_address):
                             #NOT IMPLEMENTED
-                            if debug_output:
+                            if (byte_address % bytes_per_word == 0) & debug_output:
                                 print("reading user ids: " + hex(byte_address//bytes_per_word))
                         #device IDs
                         elif (byte_address//bytes_per_word >= device_ids_start_address) &\
                          (byte_address//bytes_per_word <= device_ids_end_address):
                             #NOT IMPLEMENTED
-                            if debug_output:
+                            if (byte_address % bytes_per_word == 0) & debug_output:
                                 print("reading device ids: " + hex(byte_address//bytes_per_word))
                         #config words
                         elif (byte_address//bytes_per_word >= config_words_start_address) &\
                          (byte_address//bytes_per_word <= config_words_end_address):
                             #NOT IMPLEMENTED
-                            if debug_output:
+                            if (byte_address % bytes_per_word == 0) & debug_output:
                                 print("reading config words: " + hex(byte_address//bytes_per_word))
                         #eeprom locations
                         elif (byte_address/bytes_per_word >= eeprom_start_address) &\
                          (byte_address/bytes_per_word <= eeprom_end_address):
                             #NOT IMPLEMENTED
-                            if debug_output:
+                            if (byte_address % bytes_per_word == 0) & debug_output:
                                 print("reading eeprom: " + hex(byte_address//bytes_per_word))
                         else:
                             print("Error, hex file not compatible with bootloader. Current address: " + hex(int(byte_address / 2)))
@@ -163,7 +164,83 @@ try:
 except FileNotFoundError as fnf_error:
     print ("Requested hexfile \"" + import_file_path + "\" not found, please specify a valid file")
 
-print("Hex file successfully loaded")
+print("Hex file contents successfully loaded")
 
-for device in devices_to_prog_addresses:
-    pass
+print("")
+print("Moving to device programming")
+
+for device_address in devices_to_prog_addresses:
+    #create an I2C master for this device and open the bus
+    current_device = I2C_Bootloader_Interface(3,device_address)
+    if not current_device.open_bus():
+        print("Can not open I2C bus, exiting")
+        quit()
+    
+    if current_device.ping_device():
+        #found a device
+        print("Device found at " + hex(device_address))
+
+        #move the address pointer to the begining of the non-bootloader flash and erase the device from there
+        #sometimes get errors in comms, so always make sure the right answer is set before moving to the next step
+        if verbose_output:
+            print("Moving to begining of program memory for erase...", end="")
+            while not current_device.set_address_pointer(bootloader_prog_mem_offset):
+                print(".",end="")
+            print("[Done]")
+
+        print("Erasing program memory...", end="")
+        #erase is done in 32 word blocks, with address pointer auto incremented, so loop from start of non-bootloader
+        # flash to the end of program memory in 32 word chunks and erase
+        for row_address in range(bootloader_prog_mem_offset, prog_mem_end_address, 32):
+            current_device.erase_row()
+            print(".",end="")
+        print("[Done]")
+
+        #move the address pointer to the begining of the non-bootloader flash and program the device from there
+        #sometimes get errors in comms, so always make sure the right answer is set before moving to the next step
+        if verbose_output:
+            print("Moving to begining of program memory for program...", end="")
+            while not current_device.set_address_pointer(bootloader_prog_mem_offset):
+                print(".",end="")
+            print("[Done]")
+
+        print("Programming...", end="")
+        #Program in 8 word chunks from start of non-bootloader flash to the end of program memory
+        for row_address in range(0, prog_mem_end_address-bootloader_prog_mem_offset, 8):
+            #grab the next 8 words
+            data_to_send = []
+            for word_index in range(row_address,row_address+9):
+                data_to_send.append(pic16f1827.program_memory[word_index])
+            #and send it to the device
+            current_device.send_data_to_buffer(data_to_send)
+            #then write it to prog memory 
+            current_device.write_buffer()
+            print(".",end="")
+        print("[Done]")
+
+        #move the address pointer to the begining of the non-bootloader flash and verify the device from there
+        #sometimes get errors in comms, so always make sure the right answer is set before moving to the next step
+        if verbose_output:
+            print("Moving to begining of program memory for verify...", end="")
+            while not current_device.set_address_pointer(bootloader_prog_mem_offset):
+                print(".",end="")
+            print("[Done]")
+
+        print("Verifying...", end="")
+        #Verify in 8 word chunks from start of non-bootloader flash to the end of program memory
+        verify_error = False
+        for row_address in range(bootloader_prog_mem_offset, prog_mem_end_address, 8):
+            #grab the next 8 words
+            data_to_verify = []
+            for word_index in range(row_address,row_address+9):
+                data_to_send.append(pic16f1827.program_memory[word_index])
+            #and verify if the data is correct - store all errors 
+            verify_error |= not current_device.verify_data(data_to_send)
+            print("."+str(row_address)+"::"+str(word_index),end="")
+        if verify_error:
+            print("[Verify Error - please re-program]")
+        else:
+            print("[Done]")
+            print("")
+            print("Firmware update complete")
+    

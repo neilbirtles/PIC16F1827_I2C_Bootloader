@@ -38,7 +38,7 @@ class I2C_Bootloader_Interface():
             self.__i2c_bus.close()
             self.__i2c_bus_open = False
 
-    def set_address_pointer(self, address_to_set, retries) -> bool:
+    def set_address_pointer(self, address_to_set) -> bool:
         if self.__i2c_bus_open:
             #split the address into bytes
             address = [address_to_set >> 8, address_to_set & 0xFF]
@@ -49,13 +49,6 @@ class I2C_Bootloader_Interface():
                 if address_to_set == self.get_address_pointer():
                     return True
                 else:
-                    while retries > 0:
-                        #write the address 
-                        self.__i2c_bus.write_i2c_block_data(self.__i2c_device_address,SET_FLASH_POINTER_COMMAND,address)
-                        if address_to_set == self.get_address_pointer():
-                            print("retry...", end="")
-                            return True
-                        retries -= 1
                     return False
             except:
                 return False
