@@ -49,14 +49,11 @@ unsigned int flash_memory_read (unsigned int address)
 	EEADRL=((address)&0xff);
 	EEADRH=((address)>>8);	
 	CFGS = 0;					// access FLASH program, not config
-	LWLO = 0;					// only load latches	
 
 	EEPGD = 1;
-    INTERRUPT_GlobalInterruptDisable();
 	RD = 1;
     asm("NOP");                 //two NOPs required 
     asm("NOP");
-    INTERRUPT_GlobalInterruptEnable();
 	return ( (EEDATH)<<8 | (EEDATL) ) ;
 }	
 
@@ -72,19 +69,14 @@ unsigned int flash_memory_read (unsigned int address)
 void flash_memory_write (unsigned int address, unsigned char *data, unsigned char write_latches_qty)
 {
     unsigned char wdi;
-    unsigned char last_instruction_location;
-    
-    //n-1 write latches are written in the first loop, 
-    //then the final write latch is filled and the row is written
-    last_instruction_location = (write_latches_qty - 1) * 2;
 
     EECON1 = 0;
 
     EEADRL=((address)&0xff);	// load address
     EEADRH=((address)>>8);		// load address
 
-    //load the first n-1 write latches with data
-    for (wdi=0;wdi<last_instruction_location;wdi+=2)
+    //load the write latches with data
+    for (wdi=0;wdi<(write_latches_qty * 2);wdi+=2)
     {
         EEDATH = data[wdi];
         EEDATL = data[wdi+1];
@@ -100,17 +92,12 @@ void flash_memory_write (unsigned int address, unsigned char *data, unsigned cha
         WR = 1;						// set WR to begin write
         asm("NOP");                 // two NOPs required - processor starts again 
         asm("NOP");                 //on the 3rd instruction following WR=1
-
-        EEADR++;                    //move to the next address
+        EEADRL++;                   //move to the next address
     }	
-
-    EEDATH = data[last_instruction_location];          //load the last instruction into the latches 
-    EEDATL = data[last_instruction_location+1];
-    EEPGD = 1;					// access program space FLASH memory
-    WREN = 1;					// allow program/erase
-    CFGS = 0;					// access FLASH program, not config
+    //move address back one or will be past where we have data to write
+    EEADRL--;
     
-    LWLO = 0;					// this time start write
+    LWLO = 0;					// start write
     EECON2 = 0x55;				
     EECON2 = 0xAA;				
     WR = 1;						// set WR to begin write - all devices latches are written to program memory 

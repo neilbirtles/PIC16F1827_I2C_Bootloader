@@ -3,7 +3,7 @@
     <type>com.microchip.mplab.nbide.embedded.makeproject</type>
     <configuration>
         <data xmlns="http://www.netbeans.org/ns/make-project/1">
-            <name>Fresh_bootloader</name>
+            <name>Bootloader_Test_App</name>
             <creation-uuid>dd9643b5-4d97-42d9-b204-9e3262f85cdf</creation-uuid>
             <make-project-type>0</make-project-type>
             <c-extensions>c</c-extensions>

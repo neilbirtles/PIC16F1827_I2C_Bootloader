@@ -13,8 +13,6 @@ else:
     print("[Error]")
     quit()
 
-
-
 print("Pinging device...", end="")
 if device_interface.ping_device():
     print("[OK]")

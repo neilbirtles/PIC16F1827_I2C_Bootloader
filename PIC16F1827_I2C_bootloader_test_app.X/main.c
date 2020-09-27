@@ -147,12 +147,19 @@ void main(void)
 
 
 App:
-	
+    //remove the program flag to allow for easy testing 
+    erase_program_flag();
     // main program loop
     while (1)
     {
         __delay_ms(200);
-        LED_Toggle();			
+        LED_Toggle();
+        __delay_ms(400);
+        LED_Toggle();
+        __delay_ms(400);
+        LED_Toggle();
+        __delay_ms(200);
+        LED_Toggle();
     }
 }
 /**

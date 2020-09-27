@@ -145,5 +145,5 @@ void flash_memory_erase (unsigned int address)
 void erase_program_flag()
 {
     //erase the last row in program memory 
-    flash_memory_erase(0xFDF);
+    flash_memory_erase(0xFE0);
 }

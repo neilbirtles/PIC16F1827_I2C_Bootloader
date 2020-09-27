@@ -63,7 +63,10 @@ const unsigned char mask = 0x25;
 #define ERASE_FLASH_ROW_COMMAND         0x04
 #define WRITE_BUFFER_TO_FLASH_COMMAND   0x05
 #define JUMP_TO_APPLICATION_COMMAND     0x06
+#define READ_FLASH_BUFFER_COMMAND       0x07
 #define PING_COMMAND                    0xAA
+
+#define MAX_PROG_MEM_ADDR               0xFFF
 
 // address typdef
 extern ADDRESS	flash_addr_pointer;

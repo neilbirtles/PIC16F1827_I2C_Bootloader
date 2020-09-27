@@ -110,13 +110,13 @@ void __interrupt() INTERRUPT_InterruptManager (void)
     asm("GOTO 0x304");
 }
 
-unsigned char flash_buffer[Device_Prog_Mem_Write_Latches*2];
+unsigned char flash_buffer[(Device_Prog_Mem_Write_Latches*2)+2];
 unsigned char i2c_wd_address;
 unsigned char i2c_index;
 unsigned char i2c_status;
 unsigned int counter = 0;
 unsigned int program_loaded_indicator = 0x3455;
-unsigned int program_loaded_location = 0xFFFF;
+unsigned int program_loaded_location = 0xFFF;
 
 ADDRESS	flash_addr_pointer;
 
@@ -146,22 +146,22 @@ void main(void)
     //INTERRUPT_PeripheralInterruptDisable();
 
     // If start voltage cal is held low at reset, then force bootloader mode
-	if (!Start_Voltage_Cal_GetValue())
-	{
-		//show bootloader mode by turning on LED until voltage cal is released 
-        LED_SetLow();
-        while(!Start_Voltage_Cal_GetValue()){
-            LED_Toggle();
-            __delay_ms(200);
-        }
-		LED_SetHigh();
-		goto App;
-	}	
+//	if (!Start_Voltage_Cal_GetValue())
+//	{
+//		//show bootloader mode by turning on LED until voltage cal is released 
+//        LED_SetLow();
+//        while(!Start_Voltage_Cal_GetValue()){
+//            LED_Toggle();
+//            __delay_ms(200);
+//        }
+//		LED_SetHigh();
+//		goto App;
+//	}	
 
 	// if we have any application loaded, jump to it
 	if (flash_memory_read(program_loaded_location) == program_loaded_indicator)
 	{
-        //main program reset vector is now 0x290
+        //main program reset vector is now 0x300
         asm("goto 0x300");
 	}
 

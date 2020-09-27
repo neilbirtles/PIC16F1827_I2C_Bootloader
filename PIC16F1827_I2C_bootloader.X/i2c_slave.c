@@ -110,22 +110,26 @@ void do_i2c_tasks()
 								{
 									if (i2c_index == 0)
 									{
-										flash_addr_pointer.bytes.byte_H= temp;
+                                        flash_addr_pointer.bytes.byte_H= temp;
 										i2c_index++;
 									}
 									else if (i2c_index == 1)
 									{
-										 flash_addr_pointer.bytes.byte_L= temp;	
-										
+										 flash_addr_pointer.bytes.byte_L= temp;
+                                         //range check the address pointer once we have both bytes
+                                         if (flash_addr_pointer.word.address > MAX_PROG_MEM_ADDR)
+                                         {
+                                             flash_addr_pointer.word.address = MAX_PROG_MEM_ADDR;
+                                         }
 									}
 								}
-								if ( i2c_wd_address == RECEIVE_FLASH_DATA_COMMAND )	// 0x02 write data word address
+								else if ( i2c_wd_address == RECEIVE_FLASH_DATA_COMMAND )	// 0x02 write data word address
 								{
 									flash_buffer[i2c_index]=temp;
 									i2c_index++;
 									if (i2c_index == 16)
 										i2c_index--;
-								}	
+								}
 							}					
 
 						break;
@@ -136,7 +140,7 @@ void do_i2c_tasks()
 									// Send first byte here, next byte will be send at MRD case, see below		
 									_WriteData (flash_addr_pointer.bytes.byte_H);
 								}
-								if (i2c_wd_address == READ_FLASH_COMMAND)	// read data from flash memory
+								else if (i2c_wd_address == READ_FLASH_COMMAND)	// read data from flash memory
 								{
 									if (i2c_index == 0)
 									{
@@ -157,7 +161,7 @@ void do_i2c_tasks()
 											i2c_index--;	// should never get here....
 									}		
 								}
-								if (i2c_wd_address == ERASE_FLASH_ROW_COMMAND)
+								else if (i2c_wd_address == ERASE_FLASH_ROW_COMMAND)
 								{
 									// erase command, erases a row of Device_Prog_Mem_Erase_Block_Size words
 									//LED_2 = 1;
@@ -166,7 +170,7 @@ void do_i2c_tasks()
 									_WriteData(0x00);
 									//LED_2 = 0;
 								}
-								if (i2c_wd_address == WRITE_BUFFER_TO_FLASH_COMMAND)
+								else if (i2c_wd_address == WRITE_BUFFER_TO_FLASH_COMMAND)
 								{
 									// write command. What's stored into flash_buffer is written 
 									// to FLASH memory at the address pointed to by the address pointer.
@@ -178,7 +182,7 @@ void do_i2c_tasks()
 									//LED_3 = 0;	
 									
 								}	
-								if (i2c_wd_address == JUMP_TO_APPLICATION_COMMAND)
+								else if (i2c_wd_address == JUMP_TO_APPLICATION_COMMAND)
 								{
 									// jump to appplication code
 									_WriteData(0x00);
@@ -188,26 +192,38 @@ void do_i2c_tasks()
                                     asm("RESET");
 									
 								}
-                                if (i2c_wd_address == PING_COMMAND) //ping check command for bootloader
+                                else if (i2c_wd_address == PING_COMMAND) //ping check command for bootloader
                                 {
                                     //acknowledge with 0xAA
                                     _WriteData(0xAA);
+                                }
+                                else if (i2c_wd_address == READ_FLASH_BUFFER_COMMAND)
+                                {
+                                    _WriteData(flash_buffer[i2c_index]);
+									i2c_index++;
                                 }
 						break;
 						
 						
 						case MRD :								//MASTER READS DATA STATE
-								if (i2c_wd_address == GET_FLASH_POINTER_COMMAND)	// buffer word address
+                                if (i2c_wd_address == GET_FLASH_POINTER_COMMAND)	// buffer word address
 								{		
 									_WriteData (flash_addr_pointer.bytes.byte_L);
 								}
-								if (i2c_wd_address == READ_FLASH_COMMAND)
+								else if (i2c_wd_address == READ_FLASH_COMMAND)
 								{
 									_WriteData(flash_buffer[i2c_index]);
 									i2c_index++;
 									if (i2c_index == 16)
 										i2c_index--;
-								}								
+								}
+                                else if (i2c_wd_address == READ_FLASH_BUFFER_COMMAND)
+                                {
+                                    _WriteData(flash_buffer[i2c_index]);
+									i2c_index++;
+                                    if (i2c_index == 16)
+										i2c_index--;
+                                }								
 						break;		
 					}
 			}

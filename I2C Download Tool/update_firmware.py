@@ -6,7 +6,7 @@ from i2c_master import I2C_Bootloader_Interface
 
 import_file_path = ""
 verbose_output = False
-debug_output = True
+debug_output = False
 
 devices_to_prog_addresses = {0x10, 0x11}
 
@@ -168,6 +168,7 @@ print("Hex file contents successfully loaded")
 
 print("")
 print("Moving to device programming")
+print("")
 
 for device_address in devices_to_prog_addresses:
     #create an I2C master for this device and open the bus
@@ -187,6 +188,9 @@ for device_address in devices_to_prog_addresses:
             while not current_device.set_address_pointer(bootloader_prog_mem_offset):
                 print(".",end="")
             print("[Done]")
+        else:
+            while not current_device.set_address_pointer(bootloader_prog_mem_offset):
+                pass
 
         print("Erasing program memory...", end="")
         #erase is done in 32 word blocks, with address pointer auto incremented, so loop from start of non-bootloader
@@ -203,19 +207,29 @@ for device_address in devices_to_prog_addresses:
             while not current_device.set_address_pointer(bootloader_prog_mem_offset):
                 print(".",end="")
             print("[Done]")
+        else:
+            while not current_device.set_address_pointer(bootloader_prog_mem_offset):
+                pass
 
-        print("Programming...", end="")
+        if verbose_output:
+            print("Programming...")
+        else:
+            print("Programming...", end="")
         #Program in 8 word chunks from start of non-bootloader flash to the end of program memory
-        for row_address in range(0, prog_mem_end_address-bootloader_prog_mem_offset, 8):
+        #for row_address in range(bootloader_prog_mem_offset, prog_mem_end_address-bootloader_prog_mem_offset, 8):
+        for row_address in range(bootloader_prog_mem_offset, pic16f1827.last_populated_prog_mem_addr, 8):
             #grab the next 8 words
             data_to_send = []
-            for word_index in range(row_address,row_address+9):
+            for word_index in range(row_address,row_address+8):
                 data_to_send.append(pic16f1827.program_memory[word_index])
             #and send it to the device
+            if verbose_output:
+                print("Data being sent to device: " +str([hex(x) for x in data_to_send]))
             current_device.send_data_to_buffer(data_to_send)
             #then write it to prog memory 
             current_device.write_buffer()
-            print(".",end="")
+            if not verbose_output:
+                print(".",end="")
         print("[Done]")
 
         #move the address pointer to the begining of the non-bootloader flash and verify the device from there
@@ -225,22 +239,50 @@ for device_address in devices_to_prog_addresses:
             while not current_device.set_address_pointer(bootloader_prog_mem_offset):
                 print(".",end="")
             print("[Done]")
+        else:
+            while not current_device.set_address_pointer(bootloader_prog_mem_offset):
+                pass
 
-        print("Verifying...", end="")
+        if verbose_output:
+            print("Verifying...")
+        else:
+            print("Verifying...", end="")
         #Verify in 8 word chunks from start of non-bootloader flash to the end of program memory
         verify_error = False
-        for row_address in range(bootloader_prog_mem_offset, prog_mem_end_address, 8):
+        #for row_address in range(bootloader_prog_mem_offset, prog_mem_end_address-bootloader_prog_mem_offset, 8):
+        for row_address in range(bootloader_prog_mem_offset, pic16f1827.last_populated_prog_mem_addr, 8):
             #grab the next 8 words
             data_to_verify = []
-            for word_index in range(row_address,row_address+9):
-                data_to_send.append(pic16f1827.program_memory[word_index])
+            for word_index in range(row_address,row_address+8):
+                data_to_verify.append(pic16f1827.program_memory[word_index])
             #and verify if the data is correct - store all errors 
-            verify_error |= not current_device.verify_data(data_to_send)
-            print("."+str(row_address)+"::"+str(word_index),end="")
+            if verbose_output:
+                verify_error |= not current_device.verify_data(data_to_verify, True)
+            else:
+                verify_error |= not current_device.verify_data(data_to_verify, False)
+                print(".", end="")
         if verify_error:
             print("[Verify Error - please re-program]")
-        else:
-            print("[Done]")
-            print("")
-            print("Firmware update complete")
+            current_device.close_bus()
+            quit()
+        #finished verification
+        print("[Done]")
+
+        #write the flag to show program is loaded
+        print("Writing app available flag...", end="")
+        while not current_device.set_app_mode_flag(prog_mem_end_address):
+            print(".", end="")
+        print("[Done]")
+
+        #reboot the device into app mode
+        print("Rebooting device..", end="")
+        while not current_device.goto_app_mode():
+            print(".", end="")
+        print("[Done]")
+
+        print("")
+        print("Firmware update complete for device " + hex(device_address))
+
+    else:
+        print("Cannot open device at " +hex(device_address))
     

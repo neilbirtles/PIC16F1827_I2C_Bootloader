@@ -14,3 +14,12 @@ class Device():
     @property
     def eeprom(self):
         return self.__eeprom
+
+    @property
+    def last_populated_prog_mem_addr(self):
+        last_addr = 0x000
+        for address in range(0,len(self.__prog_mem)):
+            if self.__prog_mem[address] != 0x3FFF:
+                last_addr = address
+        return last_addr
+
