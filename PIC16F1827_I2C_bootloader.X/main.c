@@ -110,7 +110,7 @@ void __interrupt() INTERRUPT_InterruptManager (void)
     asm("GOTO 0x304");
 }
 
-unsigned char flash_buffer[(Device_Prog_Mem_Write_Latches*2)+2];
+unsigned char flash_buffer[Device_Prog_Mem_Write_Latches*2];
 unsigned char i2c_wd_address;
 unsigned char i2c_index;
 unsigned char i2c_status;
