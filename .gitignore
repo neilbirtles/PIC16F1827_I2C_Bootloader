@@ -2,3 +2,27 @@
 PIC16F1827_I2C_bootloader.X/disassembly/listing.disasm
 I2C Download Tool/__pycache__/device.cpython-36.pyc
 *.pyc
+
+PIC16F1827_I2C_bootloader.X/nbproject/Makefile-*
+PIC16F1827_I2C_bootloader.X/nbproject/Package-*
+PIC16F1827_I2C_bootloader.X/build/*
+PIC16F1827_I2C_bootloader.X/disassembly/*
+PIC16F1827_I2C_bootloader.X/dist/*
+!PIC16F1827_I2C_bootloader.X/dist/default
+PIC16F1827_I2C_bootloader.X/dist/default/*
+!PIC16F1827_I2C_bootloader.X/dist/default/production
+PIC16F1827_I2C_bootloader.X/dist/default/production/*
+!PIC16F1827_I2C_bootloader.X/dist/default/production/*.hex
+PIC16F1827_I2C_bootloader.X/nbproject/private/*
+
+PIC16F1827_I2C_bootloader_test_app.X/nbproject/Makefile-*
+PIC16F1827_I2C_bootloader_test_app.X/nbproject/Package-*
+PIC16F1827_I2C_bootloader_test_app.X/build/*
+PIC16F1827_I2C_bootloader_test_app.X/disassembly/*
+PIC16F1827_I2C_bootloader_test_app.X/dist/*
+!PIC16F1827_I2C_bootloader_test_app.X/dist/default
+PIC16F1827_I2C_bootloader_test_app.X/dist/default/*
+!PIC16F1827_I2C_bootloader_test_app.X/dist/default/production
+PIC16F1827_I2C_bootloader_test_app.X/dist/default/production/*
+!PIC16F1827_I2C_bootloader_test_app.X/dist/default/production/*.hex
+PIC16F1827_I2C_bootloader_test_app.X/nbproject/private/*

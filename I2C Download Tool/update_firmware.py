@@ -38,7 +38,7 @@ arg_parser.add_argument("-H", "--hexfile", required=True, help="Hexfile that con
 arg_parser.add_argument("-v", "--verbose", action='store_true',help="Provides a verbose output of progress")
 # parse and save the command line arguments 
 arguments = arg_parser.parse_args()
-import_file_path = arguments.hexfile
+import_file_path = (arguments.hexfile).strip()
 verbose_output = arguments.verbose
 
 try:
@@ -163,6 +163,8 @@ try:
     
 except FileNotFoundError as fnf_error:
     print ("Requested hexfile \"" + import_file_path + "\" not found, please specify a valid file")
+    print ("Exiting")
+    quit()
 
 print("Hex file contents successfully loaded")
 
