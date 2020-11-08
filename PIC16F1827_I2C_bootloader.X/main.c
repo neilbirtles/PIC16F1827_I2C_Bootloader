@@ -81,10 +81,6 @@ void PIN_MANAGER_Initialize(void)
     */
     APFCON0 = 0x00;
     APFCON1 = 0x00;
-   
-    // Enable IOCI interrupt 
-    INTCONbits.IOCIE = 1; 
-    
 }
 
 void OSCILLATOR_Initialize(void)
@@ -127,9 +123,7 @@ void main(void)
 {
     // initialize the device
     SYSTEM_Initialize();
-    
-    I2C_Slave_Init();
-
+   
     // When using interrupts, you need to set the Global and Peripheral Interrupt Enable bits
     // Use the following macros to:
 
@@ -166,7 +160,7 @@ void main(void)
 	}
 
 App:
-	
+	I2C_Slave_Init();
     // main program loop
     while (1)
     {
